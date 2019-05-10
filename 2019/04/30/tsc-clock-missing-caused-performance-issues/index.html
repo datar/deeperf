@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="TL;DR SolutionUpdate Linux kernel to the latest version. Simple ConclusionEarly Linux kernel doesn’t support the latest Intel’s CPU architecture very well. The Linux OS uses hpet clock source instead">
+<meta name="keywords" content="Linux,clock,clocksource,TSC,HPET,performance,troubleshooting">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A Performance Issue Caused by the TSC Clock Source Missing in Linux">
+<meta property="og:url" content="http://www.deeperf.com/2019/04/30/tsc-clock-missing-caused-performance-issues/index.html">
+<meta property="og:site_name" content="Deeperf">
+<meta property="og:description" content="TL;DR SolutionUpdate Linux kernel to the latest version. Simple ConclusionEarly Linux kernel doesn’t support the latest Intel’s CPU architecture very well. The Linux OS uses hpet clock source instead">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-05-10T04:18:26.550Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="A Performance Issue Caused by the TSC Clock Source Missing in Linux">
+<meta name="twitter:description" content="TL;DR SolutionUpdate Linux kernel to the latest version. Simple ConclusionEarly Linux kernel doesn’t support the latest Intel’s CPU architecture very well. The Linux OS uses hpet clock source instead">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://www.deeperf.com/2019/04/30/tsc-clock-missing-caused-performance-issues/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>A Performance Issue Caused by the TSC Clock Source Missing in Linux | Deeperf</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Deeperf</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">Dive Deeper into Performance</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>About</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.deeperf.com/2019/04/30/tsc-clock-missing-caused-performance-issues/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xing">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Deeperf">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">A Performance Issue Caused by the TSC Clock Source Missing in Linux
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-04-30 17:10:00" itemprop="dateCreated datePublished" datetime="2019-04-30T17:10:00-07:00">2019-04-30</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2019-05-09 21:18:26" itemprop="dateModified" datetime="2019-05-09T21:18:26-07:00">2019-05-09</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="TL-DR-Solution"><a href="#TL-DR-Solution" class="headerlink" title="TL;DR Solution"></a>TL;DR Solution</h2><p>Update Linux kernel to the latest version.</p>
+<h2 id="Simple-Conclusion"><a href="#Simple-Conclusion" class="headerlink" title="Simple Conclusion"></a>Simple Conclusion</h2><p>Early Linux kernel doesn’t support the latest Intel’s CPU architecture very well. The Linux OS uses hpet clock source instead of TSC. It caused low performance and other issues.</p>
+<h2 id="Issues"><a href="#Issues" class="headerlink" title="Issues"></a>Issues</h2><p><strong>Servers</strong></p>
+<ul>
+<li>Overclocked core i9 server which is the new one. Its CPU frequency is more than 4.6 GHz.</li>
+<li>Other servers’ CPU are E5 2600 v3/v4 series. Generally, the CPU frequency is 3.x GHz.<br><strong>OS</strong></li>
+<li>Ubuntu 14.04 is running on all of them for convenience.<br><strong>Low Performance on i9 server</strong><br>The same program is supposed to be faster on i9 server. But my test shows the program is much slower on the new i9 server. The key function takes about 1 microsecond on old servers. It takes 10 microseconds on the new server.</li>
+</ul>
+<h2 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h2><ul>
+<li>According to <code>perf</code> result on i9 server, the key function spent most of CPU time on system call <code>gettimeofday()</code>.</li>
+<li>I made a simple test program to see what is the time cost of calling <code>gettimeofday()</code> on each machine.</li>
+<li>That program showed calling <code>gettimeofday()</code> took 4.5 microseconds on i9 machine. It only took about 100 nanoseconds on E5 series machine.</li>
+<li>The function <code>gettimeofday()</code> is supposed to use ticks count value in CPU register which only costs couples CPU circles. There should be something wrong in clock source.</li>
+<li><p>Checked the clock source on i9 server. It is using hpet clock source. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cat /sys/devices/system/clocksource/clocksource0/current_clocksource</span><br><span class="line">hpet</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Checked available clock sources on i9 server. Only hpet source is there.  The default clock source TSC is missing.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cat /sys/devices/system/clocksource/clocksource0/available_clocksource</span><br><span class="line">hpet</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>It’s clear now. <code>gettimeofday()</code> uses the hpet clock source that caused the performance issues. Hpet clock is from a chip on the motherboard. It costs much more than TSC.</p>
+</li>
+</ul>
+<h2 id="More-details"><a href="#More-details" class="headerlink" title="More details"></a>More details</h2><p><strong>Why TSC is missing</strong><br>Checked the Linux kernel repo and Red Hat Linux web site, an early Linux kernel couldn’t get the right clock frequency of skylake CPU. Actually, that number is hardcode in the kernel. The boot process would fail to calibrate clock by TSC source. Then the kernel dropped TSC and used hpet as clock source.</p>
+<p><strong>Why hpet is slower than TSC</strong><br>HPET is from timers in a chip on motherboard. The communication between CPU and this chip is slower than getting the value in CPU register. </p>
+<p><strong>Clocks sources in Linux OS</strong></p>
+<ul>
+<li>TSC is the default clock source in Linux OS. Many years ago, TSC depends on CPU frequency which couldn’t change after boot. But on recent intel’s CPU, the frequency could decrease to save energy or boost up for performance. In a modern intel’s CPU, TSC is from an individual frequency in CPU which wouldn’t change. The accurate is less than 1 nanosecond on recent CPU.</li>
+<li>HPET is from timers in a chip on the motherboard. Those timers’ frequency is at least 10 MHz which is much lower than CPU frequency. </li>
+<li>There are many other clock sources. Please find more details in this page <a href="https://access.redhat.com/solutions/18627" target="_blank" rel="noopener">clock sources in Linux</a></li>
+</ul>
+<h2 id="Links"><a href="#Links" class="headerlink" title="Links"></a>Links</h2><ul>
+<li><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v4.16-rc3&amp;id=b511203093489eb1829cb4de86e8214752205ac6" target="_blank" rel="noopener">Got wrong CPU frequency issue in Linux Kernel</a></li>
+<li><a href="https://bugzilla.kernel.org/show_bug.cgi?id=197843" target="_blank" rel="noopener">A bug report of skylake frequency issue</a></li>
+<li><a href="https://www.reddit.com/r/linux4noobs/comments/7rc3jk/tsc_not_calibrating_centos_7_latest/" target="_blank" rel="noopener">The CPU frequency error messages in booting. </a></li>
+<li><a href="https://access.redhat.com/solutions/3367331" target="_blank" rel="noopener">TSC clocksource is not available in RHEL 6 and 7</a></li>
+<li><a href="https://access.redhat.com/solutions/18627" target="_blank" rel="noopener">clock sources in Linux</a></li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
+          
+            <a href="/tags/clock/" rel="tag"># clock</a>
+          
+            <a href="/tags/clocksource/" rel="tag"># clocksource</a>
+          
+            <a href="/tags/TSC/" rel="tag"># TSC</a>
+          
+            <a href="/tags/HPET/" rel="tag"># HPET</a>
+          
+            <a href="/tags/performance/" rel="tag"># performance</a>
+          
+            <a href="/tags/troubleshooting/" rel="tag"># troubleshooting</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Xing</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#TL-DR-Solution"><span class="nav-number">1.</span> <span class="nav-text">TL;DR Solution</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Simple-Conclusion"><span class="nav-number">2.</span> <span class="nav-text">Simple Conclusion</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Issues"><span class="nav-number">3.</span> <span class="nav-text">Issues</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Troubleshooting"><span class="nav-number">4.</span> <span class="nav-text">Troubleshooting</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#More-details"><span class="nav-number">5.</span> <span class="nav-text">More details</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Links"><span class="nav-number">6.</span> <span class="nav-text">Links</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xing</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.1.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/schemes/muse.js?v=7.1.1"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

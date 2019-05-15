@@ -335,6 +335,171 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://deeperf.com/2019/05/14/Troubleshooting-gcloud-compute-ssh-could-not-fetch-instance/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xing">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Deeperf">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/14/Troubleshooting-gcloud-compute-ssh-could-not-fetch-instance/" class="post-title-link" itemprop="url">Troubleshooting: gcloud compute ssh could not fetch instance</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-14 23:55:45" itemprop="dateCreated datePublished" datetime="2019-05-14T23:55:45-07:00">2019-05-14</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2019-05-15 00:29:33" itemprop="dateModified" datetime="2019-05-15T00:29:33-07:00">2019-05-15</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Issues"><a href="#Issues" class="headerlink" title="Issues"></a>Issues</h2><p>On gcloud compute, I created an instance in project gvm. Then the command <code>gcloud compute ssh</code> failed to log into that instance. The error message is</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ gcloud compute ssh instance-1</span><br><span class="line"></span><br><span class="line">$ ERROR: (gcloud.compute.ssh) Could not fetch instance:</span><br><span class="line"></span><br><span class="line"> - The resource &apos;projects/gvm/zones/us-west1-a/instances/instance-1&apos; was not found</span><br></pre></td></tr></table></figure>
+<h2 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h2><p>According to this <a href="https://cloud.google.com/compute/docs/gcloud-compute/#configurations" target="_blank" rel="noopener">Google Cloud Document</a>. The reason for this case is <strong>the instance zone and gcloud default zone are different</strong>. The command line didn’t specified the <strong>instance zone</strong>. So the google cloud compute <strong>default zone</strong> was used. Obviously, The instance should not be found in the default zone. Just adding the <code>zone</code> option in command could solve the problem. The command format is like</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcloud compute --project &quot;gvm&quot; ssh --zone &quot;instance-zone&quot; &quot;instance-name&quot;</span><br></pre></td></tr></table></figure>
+<p>The cmd info could be fount in vm instances page in gcloud console.</p>
+<ul>
+<li>find the instance</li>
+<li>scroll the <strong>SSH</strong> list</li>
+<li>choose <strong>View gcloud command</strong></li>
+</ul>
+<p><img src="https://user-images.githubusercontent.com/1470025/57756287-c946ff00-76a7-11e9-9468-e82c71633f87.jpg" alt="20190514_gcloud_ssh_cmd"></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://deeperf.com/2019/04/30/tsc-clock-missing-caused-performance-issues/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -553,7 +718,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-count">2</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -586,7 +751,15 @@
                     
                       
                     
-                    <span class="site-state-item-count">7</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
